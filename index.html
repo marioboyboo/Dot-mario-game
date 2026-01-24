@@ -1,18 +1,196 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8">
-  <title>Dot Mario</title>
-  <script>
-    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-    if (isMobile) {
-      window.location.href = "mobile.html";
-    } else {
-      window.location.href = "pc.html";
-    }
-  </script>
+<meta charset="UTF-8">
+<title>Dot Mario – Goose Edition</title>
+<style>
+  body {
+    margin: 0;
+    overflow: hidden;
+    background: skyblue;
+    touch-action: none;
+  }
+  canvas {
+    display: block;
+    background: skyblue;
+  }
+  .controls {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    height: 120px;
+    background: linear-gradient(orange, red);
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+  }
+  .btn {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    background: white;
+    font-size: 40px;
+    border: none;
+  }
+</style>
 </head>
 <body>
-  Redirecting...
+
+<canvas id="game"></canvas>
+
+<div class="controls">
+  <button class="btn" id="left">⬅️</button>
+  <button class="btn" id="jump">⬆️</button>
+  <button class="btn" id="right">➡️</button>
+</div>
+
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+canvas.width = innerWidth;
+canvas.height = innerHeight - 120;
+
+let cameraX = 0;
+
+const player = {
+  x: 100, y: 200, r: 15,
+  vx: 0, vy: 0,
+  onGround: false
+};
+
+const gravity = 0.6;
+
+const ground = { x: 0, y: canvas.height - 40, w: 5000, h: 40 };
+
+const platforms = [
+  {x:300,y:300,w:120,h:20},
+  {x:600,y:250,w:120,h:20},
+  {x:900,y:200,w:120,h:20},
+  {x:1400,y:250,w:120,h:20}
+];
+
+const enemies = [
+  {x:500,y:canvas.height-55,r:15,dir:1},
+  {x:1100,y:canvas.height-55,r:15,dir:-1}
+];
+
+const flag = { x: 1800, y: canvas.height - 200, w: 20, h: 160 };
+
+let keys = {};
+
+addEventListener("keydown", e => keys[e.key] = true);
+addEventListener("keyup", e => keys[e.key] = false);
+
+left.ontouchstart = () => keys["ArrowLeft"] = true;
+left.ontouchend = () => keys["ArrowLeft"] = false;
+right.ontouchstart = () => keys["ArrowRight"] = true;
+right.ontouchend = () => keys["ArrowRight"] = false;
+jump.ontouchstart = () => {
+  if (player.onGround) {
+    player.vy = -12;
+    player.onGround = false;
+  }
+};
+
+function collideRectCircle(rect, c) {
+  return (
+    c.x + c.r > rect.x &&
+    c.x - c.r < rect.x + rect.w &&
+    c.y + c.r > rect.y &&
+    c.y - c.r < rect.y + rect.h
+  );
+}
+
+function update() {
+  player.vx = 0;
+  if (keys["ArrowLeft"]) player.vx = -5;
+  if (keys["ArrowRight"]) player.vx = 5;
+  if (keys["ArrowUp"] && player.onGround) {
+    player.vy = -12;
+    player.onGround = false;
+  }
+
+  player.vy += gravity;
+  player.x += player.vx;
+  player.y += player.vy;
+
+  player.onGround = false;
+
+  if (collideRectCircle(ground, player)) {
+    player.y = ground.y - player.r;
+    player.vy = 0;
+    player.onGround = true;
+  }
+
+  platforms.forEach(p => {
+    if (collideRectCircle(p, player) && player.vy >= 0) {
+      player.y = p.y - player.r;
+      player.vy = 0;
+      player.onGround = true;
+    }
+  });
+
+  enemies.forEach(e => {
+    e.x += e.dir * 2;
+    if (e.x < 400 || e.x > 1400) e.dir *= -1;
+
+    const dx = player.x - e.x;
+    const dy = player.y - e.y;
+    const dist = Math.hypot(dx, dy);
+
+    if (dist < player.r + e.r) {
+      alert("💀 You got bonked!");
+      location.reload();
+    }
+  });
+
+  if (player.x > flag.x) {
+    alert("🎉 YOU WIN 🪿🪿🪿");
+    location.reload();
+  }
+
+  cameraX = player.x - canvas.width / 2;
+}
+
+function draw() {
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.save();
+  ctx.translate(-cameraX,0);
+
+  ctx.fillStyle = "green";
+  ctx.fillRect(ground.x,ground.y,ground.w,ground.h);
+
+  ctx.fillStyle = "green";
+  platforms.forEach(p => ctx.fillRect(p.x,p.y,p.w,p.h));
+
+  ctx.fillStyle = "red";
+  enemies.forEach(e => {
+    ctx.beginPath();
+    ctx.arc(e.x,e.y,e.r,0,Math.PI*2);
+    ctx.fill();
+  });
+
+  ctx.fillStyle = "white";
+  ctx.fillRect(flag.x, flag.y, flag.w, flag.h);
+
+  ctx.font = "100px serif";
+  ctx.fillText("🪿", flag.x - 50, flag.y - 20);
+
+  ctx.fillStyle = "black";
+  ctx.beginPath();
+  ctx.arc(player.x,player.y,player.r,0,Math.PI*2);
+  ctx.fill();
+
+  ctx.restore();
+}
+
+function loop() {
+  update();
+  draw();
+  requestAnimationFrame(loop);
+}
+
+loop();
+</script>
 </body>
 </html>
