@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Dot Mario – Mobile</title>
+<style>
+body {
+  margin: 0;
+  background: skyblue;
+  overflow: hidden;
+  touch-action: none;
+}
+#player {
+  width: 20px;
+  height: 20px;
+  background: black;
+  border-radius: 50%;
+  position: absolute;
+  bottom: 50px;
+  left: 50px;
+}
+#ground {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  height: 40px;
+  background: green;
+}
+.controls {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  display: flex;
+  justify-content: space-around;
+  background: rgba(0,0,0,0.2);
+  padding: 10px;
+}
+button {
+  width: 80px;
+  height: 80px;
+  font-size: 30px;
+  border-radius: 50%;
+}
+</style>
+</head>
+<body>
+
+<div id="player"></div>
+<div id="ground"></div>
+
+<div class="controls">
+  <button ontouchstart="left=true" ontouchend="left=false">◀</button>
+  <button ontouchstart="jump()">▲</button>
+  <button ontouchstart="right=true" ontouchend="right=false">▶</button>
+</div>
+
+<script>
+const player = document.getElementById("player");
+let x = 50;
+let y = 50;
+let vy = 0;
+let onGround = false;
+let left = false;
+let right = false;
+
+function jump() {
+  if (onGround) {
+    vy = 12;
+    onGround = false;
+  }
+}
+
+function loop() {
+  if (left) x -= 5;
+  if (right) x += 5;
+
+  vy -= 0.6;
+  y += vy;
+
+  if (y <= 50) {
+    y = 50;
+    vy = 0;
+    onGround = true;
+  }
+
+  player.style.left = x + "px";
+  player.style.bottom = y + "px";
+  requestAnimationFrame(loop);
+}
+
+loop();
+</script>
+
+</body>
+</html>
