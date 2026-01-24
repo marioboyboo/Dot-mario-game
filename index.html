@@ -3,17 +3,44 @@
 <head>
 <meta charset="UTF-8">
 <title>Dot Mario – Goose Edition</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
 <style>
-  body { margin:0; overflow:hidden; background:skyblue; touch-action:none; }
-  canvas { display:block; }
-  .controls {
-    position: fixed; bottom: 0; width: 100%; height: 120px;
-    background: linear-gradient(orange, red);
-    display: flex; justify-content: space-around; align-items: center;
+  * {
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
   }
+
+  body {
+    margin: 0;
+    overflow: hidden;
+    background: skyblue;
+    touch-action: none;
+  }
+
+  canvas { display: block; }
+
+  .controls {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    height: 120px;
+    background: linear-gradient(orange, red);
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+  }
+
   .btn {
-    width: 90px; height: 90px; border-radius: 50%;
-    background: white; font-size: 40px; border: none;
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    background: white;
+    font-size: 40px;
+    border: none;
+    touch-action: none;
   }
 </style>
 </head>
@@ -28,28 +55,34 @@
 </div>
 
 <script>
+// BLOCK LONG PRESS MENU
+document.addEventListener("contextmenu", e => e.preventDefault());
+document.addEventListener("selectstart", e => e.preventDefault());
+
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
+
+const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
 canvas.width = innerWidth;
 canvas.height = innerHeight - 120;
 
 let cameraX = 0;
 let score = 0;
 
-const player = {
-  x:100, y:200, r:15,
-  vx:0, vy:0, onGround:false
-};
-
+const player = { x:100, y:200, r:15, vx:0, vy:0, onGround:false };
 const gravity = 0.6;
 
 const ground = { x:0, y:canvas.height-40, w:5000, h:40 };
 
+// LOWER PLATFORMS ON MOBILE
+const platformOffset = isMobile ? 80 : 0;
+
 const platforms = [
-  {x:300,y:300,w:120,h:20},
-  {x:600,y:250,w:120,h:20},
-  {x:900,y:200,w:120,h:20},
-  {x:1400,y:250,w:120,h:20}
+  {x:300, y:300+platformOffset, w:120, h:20},
+  {x:600, y:260+platformOffset, w:120, h:20},
+  {x:900, y:220+platformOffset, w:120, h:20},
+  {x:1400,y:260+platformOffset,w:120,h:20}
 ];
 
 let enemies = [
@@ -58,10 +91,10 @@ let enemies = [
 ];
 
 let coins = [
-  {x:320,y:260,collected:false},
-  {x:620,y:210,collected:false},
-  {x:920,y:160,collected:false},
-  {x:1450,y:210,collected:false}
+  {x:320,y:260+platformOffset,collected:false},
+  {x:620,y:220+platformOffset,collected:false},
+  {x:920,y:180+platformOffset,collected:false},
+  {x:1450,y:220+platformOffset,collected:false}
 ];
 
 const flag = { x:1800, y:canvas.height-200, w:20, h:160 };
@@ -98,13 +131,15 @@ function update(){
 
   if(rectCircle(ground,player)){
     player.y=ground.y-player.r;
-    player.vy=0; player.onGround=true;
+    player.vy=0;
+    player.onGround=true;
   }
 
   platforms.forEach(p=>{
     if(rectCircle(p,player) && player.vy>=0){
       player.y=p.y-player.r;
-      player.vy=0; player.onGround=true;
+      player.vy=0;
+      player.onGround=true;
     }
   });
 
@@ -115,10 +150,8 @@ function update(){
 
     const dx=player.x-e.x;
     const dy=player.y-e.y;
-    const dist=Math.hypot(dx,dy);
-
-    if(dist<player.r+e.r){
-      if(player.vy>0){ // STOMP
+    if(Math.hypot(dx,dy)<player.r+e.r){
+      if(player.vy>0){
         e.alive=false;
         player.vy=-8;
         score+=100;
@@ -131,9 +164,7 @@ function update(){
 
   coins.forEach(c=>{
     if(c.collected) return;
-    const dx=player.x-c.x;
-    const dy=player.y-c.y;
-    if(Math.hypot(dx,dy)<player.r+10){
+    if(Math.hypot(player.x-c.x, player.y-c.y)<player.r+10){
       c.collected=true;
       score+=10;
     }
@@ -144,7 +175,7 @@ function update(){
     location.reload();
   }
 
-  cameraX=player.x-canvas.width/2;
+  cameraX = player.x - canvas.width/2;
 }
 
 function draw(){
@@ -155,9 +186,7 @@ function draw(){
   ctx.fillStyle="green";
   ctx.fillRect(ground.x,ground.y,ground.w,ground.h);
 
-  platforms.forEach(p=>{
-    ctx.fillRect(p.x,p.y,p.w,p.h);
-  });
+  platforms.forEach(p=>ctx.fillRect(p.x,p.y,p.w,p.h));
 
   enemies.forEach(e=>{
     if(!e.alive) return;
@@ -168,9 +197,10 @@ function draw(){
   });
 
   coins.forEach(c=>{
-    if(c.collected) return;
-    ctx.font="24px serif";
-    ctx.fillText("🪙",c.x-10,c.y+10);
+    if(!c.collected){
+      ctx.font="24px serif";
+      ctx.fillText("🪙",c.x-10,c.y+10);
+    }
   });
 
   ctx.fillStyle="white";
@@ -185,7 +215,6 @@ function draw(){
 
   ctx.restore();
 
-  ctx.fillStyle="black";
   ctx.font="24px sans-serif";
   ctx.fillText("Score: "+score,20,30);
 }
