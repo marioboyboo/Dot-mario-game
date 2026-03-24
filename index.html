@@ -3,25 +3,20 @@
 <head>
 <meta charset="UTF-8">
 <title>Dot Mario – Goose Edition</title>
-
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-
 <style>
   * {
     user-select: none;
     -webkit-user-select: none;
     -webkit-touch-callout: none;
   }
-
   body {
     margin: 0;
     overflow: hidden;
     background: skyblue;
     touch-action: none;
   }
-
   canvas { display: block; }
-
   .controls {
     position: fixed;
     bottom: 0;
@@ -32,7 +27,6 @@
     justify-content: space-around;
     align-items: center;
   }
-
   .btn {
     width: 90px;
     height: 90px;
@@ -55,29 +49,27 @@
 </div>
 
 <script>
-// BLOCK LONG PRESS MENU
 document.addEventListener("contextmenu", e => e.preventDefault());
-document.addEventListener("selectstart", e => e.preventDefault());
 
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
-
 const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
 canvas.width = innerWidth;
 canvas.height = innerHeight - 120;
 
+// LOAD MARIO SPRITE
+const marioImg = new Image();
+marioImg.src = '2577.png'; // Ensure the image file is in the same folder
+
 let cameraX = 0;
 let score = 0;
 
-const player = { x:100, y:200, r:15, vx:0, vy:0, onGround:false };
+const player = { x:100, y:200, r:20, vx:0, vy:0, onGround:false };
 const gravity = 0.6;
-
 const ground = { x:0, y:canvas.height-40, w:5000, h:40 };
 
-// LOWER PLATFORMS ON MOBILE
 const platformOffset = isMobile ? 80 : 0;
-
 const platforms = [
   {x:300, y:300+platformOffset, w:120, h:20},
   {x:600, y:260+platformOffset, w:120, h:20},
@@ -103,11 +95,11 @@ let keys = {};
 addEventListener("keydown", e => keys[e.key]=true);
 addEventListener("keyup", e => keys[e.key]=false);
 
-left.ontouchstart = () => keys["ArrowLeft"]=true;
-left.ontouchend = () => keys["ArrowLeft"]=false;
-right.ontouchstart = () => keys["ArrowRight"]=true;
-right.ontouchend = () => keys["ArrowRight"]=false;
-jump.ontouchstart = () => {
+document.getElementById('left').ontouchstart = () => keys["ArrowLeft"]=true;
+document.getElementById('left').ontouchend = () => keys["ArrowLeft"]=false;
+document.getElementById('right').ontouchstart = () => keys["ArrowRight"]=true;
+document.getElementById('right').ontouchend = () => keys["ArrowRight"]=false;
+document.getElementById('jump').ontouchstart = () => {
   if(player.onGround){ player.vy=-12; player.onGround=false; }
 };
 
@@ -118,9 +110,9 @@ function rectCircle(r,c){
 
 function update(){
   player.vx=0;
-  if(keys["ArrowLeft"]) player.vx=-5;
-  if(keys["ArrowRight"]) player.vx=5;
-  if(keys["ArrowUp"] && player.onGround){
+  if(keys["ArrowLeft"] || keys["a"]) player.vx=-5;
+  if(keys["ArrowRight"] || keys["d"]) player.vx=5;
+  if((keys["ArrowUp"] || keys["w"] || keys[" "]) && player.onGround){
     player.vy=-12; player.onGround=false;
   }
 
@@ -147,7 +139,7 @@ function update(){
     if(!e.alive) return;
     e.x+=e.dir*2;
     if(e.x<400||e.x>1400) e.dir*=-1;
-
+0
     const dx=player.x-e.x;
     const dy=player.y-e.y;
     if(Math.hypot(dx,dy)<player.r+e.r){
@@ -183,11 +175,12 @@ function draw(){
   ctx.save();
   ctx.translate(-cameraX,0);
 
+  // Ground & Platforms
   ctx.fillStyle="green";
   ctx.fillRect(ground.x,ground.y,ground.w,ground.h);
-
   platforms.forEach(p=>ctx.fillRect(p.x,p.y,p.w,p.h));
 
+  // Enemies
   enemies.forEach(e=>{
     if(!e.alive) return;
     ctx.fillStyle="red";
@@ -196,6 +189,7 @@ function draw(){
     ctx.fill();
   });
 
+  // Items
   coins.forEach(c=>{
     if(!c.collected){
       ctx.font="24px serif";
@@ -203,18 +197,19 @@ function draw(){
     }
   });
 
+  // Flag
   ctx.fillStyle="white";
   ctx.fillRect(flag.x,flag.y,flag.w,flag.h);
   ctx.font="100px serif";
   ctx.fillText("🪿",flag.x-60,flag.y-20);
 
-  ctx.fillStyle="black";
-  ctx.beginPath();
-  ctx.arc(player.x,player.y,player.r,0,Math.PI*2);
-  ctx.fill();
+  // DRAW MARIO SPRITE
+  const size = player.r * 2.5; // Slightly larger than hitbox for better look
+  ctx.drawImage(marioImg, player.x - size/2, player.y - size/2, size, size);
 
   ctx.restore();
 
+  ctx.fillStyle="black";
   ctx.font="24px sans-serif";
   ctx.fillText("Score: "+score,20,30);
 }
