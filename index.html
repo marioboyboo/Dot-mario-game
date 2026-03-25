@@ -139,7 +139,7 @@ function update(){
     if(!e.alive) return;
     e.x+=e.dir*2;
     if(e.x<400||e.x>1400) e.dir*=-1;
-0
+
     const dx=player.x-e.x;
     const dy=player.y-e.y;
     if(Math.hypot(dx,dy)<player.r+e.r){
